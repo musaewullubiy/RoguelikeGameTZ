@@ -8,9 +8,10 @@ class AnimatedActor:
                  frame_width=24, frame_height=16,
                  move_images_row=2, move_images_count=5,
                  stand_images_row=1, stand_images_count=14,
-                 move_speed=5, frames_count=14):
+                 move_speed=5, frames_count=14, scale=1.0):
         self.position = position
         self.imagepath = imagepath
+        self.scale = scale
 
         self.frame = 0
         self.frame_width = frame_width
@@ -40,7 +41,10 @@ class AnimatedActor:
                        self.frame_width):
             move_frame_surface = full_image.subsurface(
                 pygame.Rect((x, self.frame_height * self.move_images_row), (self.frame_width, self.frame_height)))
-            self.move_images.append(move_frame_surface)
+            scaled_move_surface = pygame.transform.scale(move_frame_surface,
+                                                         (int(self.frame_width * self.scale),
+                                                          int(self.frame_height * self.scale)))
+            self.move_images.append(scaled_move_surface)
 
     def load_stand_images(self):
         full_image = pygame.image.load(self.imagepath)
@@ -49,7 +53,10 @@ class AnimatedActor:
                        self.frame_width):
             stand_frame_surface = full_image.subsurface(
                 pygame.Rect((x, self.frame_height * self.stand_images_row), (self.frame_width, self.frame_height)))
-            self.stand_images.append(stand_frame_surface)
+            scaled_stand_surface = pygame.transform.scale(stand_frame_surface,
+                                                          (int(self.frame_width * self.scale),
+                                                           int(self.frame_height * self.scale)))
+            self.stand_images.append(scaled_stand_surface)
 
     def on_move(self):
         return self.move_images[self.frame % len(self.move_images)]

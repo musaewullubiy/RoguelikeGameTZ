@@ -4,7 +4,7 @@ from config import *
 from game import *
 
 
-fox = AnimatedActor('images/fox.png', (30, 30))
+fox = AnimatedActor('images/fox.png', (30, 30), scale=4)
 
 
 def draw():
