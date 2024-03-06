@@ -27,8 +27,11 @@ class AnimatedActor:
         self.stand_images_count = stand_images_count
         self.load_stand_images()
 
+        self.is_moving = False
+        self.move_speed = 5
+        self.move_direction = 0
         self.time_since_last_frame = 0
-        self.animation_speed = 0.1
+        self.animation_speed = 0.6
 
     def load_move_images(self):
         full_image = pygame.image.load(self.imagepath)
@@ -62,6 +65,8 @@ class AnimatedActor:
         if self.time_since_last_frame > self.animation_speed:
             self.frame = (self.frame + 1) % len(self.move_images)
             self.time_since_last_frame -= self.animation_speed
+
+        self.position = (self.position[0] + int(self.is_moving) * self.move_direction * self.move_speed, self.position[1])
 
     def draw(self):
         image = self.stand_images[self.frame % len(self.stand_images)]
