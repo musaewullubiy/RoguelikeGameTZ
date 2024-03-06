@@ -52,10 +52,10 @@ class AnimatedActor:
             self.stand_images.append(stand_frame_surface)
 
     def on_move(self):
-        pass
+        return self.move_images[self.frame % len(self.move_images)]
 
     def on_stand(self):
-        pass
+        return self.stand_images[self.frame % len(self.stand_images)]
 
     def on_jump(self):
         pass
@@ -69,7 +69,10 @@ class AnimatedActor:
         self.position = (self.position[0] + int(self.is_moving) * self.move_direction * self.move_speed, self.position[1])
 
     def draw(self):
-        image = self.stand_images[self.frame % len(self.stand_images)]
+        if self.is_moving:
+            image = self.on_move()
+        else:
+            image = self.on_stand()
         if self.move_direction == -1:
             image = pygame.transform.flip(image, True, False)
         game.screen.blit(image, self.position)
