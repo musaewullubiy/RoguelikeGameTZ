@@ -70,5 +70,7 @@ class AnimatedActor:
 
     def draw(self):
         image = self.stand_images[self.frame % len(self.stand_images)]
+        if self.move_direction == -1:
+            image = pygame.transform.flip(image, True, False)
         game.screen.blit(image, self.position)
 
