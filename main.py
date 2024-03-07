@@ -4,8 +4,8 @@ from config import *
 from game import *
 
 
-fox = AnimatedActor('fox.png', (WIDTH // 2, HEIGHT // 2), scale=3)
-room = Room(WIDTH, HEIGHT, 33, 20,
+fox = AnimatedActor('/fox/move/', '/fox/stand/', (WIDTH // 2, HEIGHT // 2), scale=4)
+room = Room(WIDTH, HEIGHT, 30, 20,
             tiles=[*(['tile1'] * 50), *(['tile2'] * 25), *(['tile4'] * 12), 'tile3'],
             tiles_z=['tile5', 'tile6', *([-1] * 50)])
 
@@ -25,17 +25,18 @@ def update(dt):
     new_y = fox.position[1] + int(fox.is_moving_y) * fox.y_move_direction * fox.move_speed
 
     # Проверяем, выходит ли лиса за пределы комнаты
-    if new_x < room.x - 10:
-        new_x = room.x - 10
+    if new_x < room.x:
+        new_x = room.x
     elif new_x + fox.frame_width * fox.scale > room.x + room.width:
         new_x = room.x + room.width - fox.frame_width * fox.scale
 
-    if new_y < room.y - 10:
-        new_y = room.y - 10
-    elif new_y + fox.frame_height * fox.scale > room.y + room.height - 10:
-        new_y = room.y + room.height - fox.frame_height * fox.scale - 10
+    if new_y < room.y:
+        new_y = room.y
+    elif new_y + fox.frame_height * fox.scale > room.y + room.height:
+        new_y = room.y + room.height - fox.frame_height * fox.scale
 
     fox.position = (new_x, new_y)
+
 
 
 def on_key_down(key):
@@ -59,5 +60,7 @@ def on_key_up(key):
     if key in [keys.UP, keys.DOWN]:
         fox.is_moving_y = False
 
+def on_mouse_down(pos):
+    print("Позиция клика мыши:", pos)
 
 pgzrun.go()
