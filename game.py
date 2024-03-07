@@ -1,6 +1,5 @@
 # Тут будут классы
 import os
-
 import pygame
 from pgzero import game
 from pgzero.actor import Actor
@@ -97,6 +96,11 @@ class AnimatedActor:
             image._surf = pygame.transform.flip(image._surf, True, False)
 
 
+class Enemy(AnimatedActor):
+    def __init__(self, movepath, standpath, position):
+        super().__init__(movepath, standpath, position)
+
+
 class Tile:
     def __init__(self, x, y, size, image):
         self.x = x
@@ -160,6 +164,12 @@ class Room:
         for door in self.doors:
             door.draw(surface)
         return Rect((self.x - 8, self.y - 8), (self.width, self.height))
+
+    def is_collided_with_door(self, actor):
+        for door in self.doors:
+            if door.actor.colliderect(actor):
+                return True
+        return False
 
 
 class Door:

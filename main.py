@@ -4,7 +4,7 @@ from config import *
 from game import *
 
 
-fox = AnimatedActor('/fox/move/', '/fox/stand/', (WIDTH // 2, HEIGHT // 2), scale=4)
+fox = AnimatedActor('/fox/move/', '/fox/stand/', (WIDTH // 2, HEIGHT // 2), scale=2, move_speed=3)
 room = Room(WIDTH, HEIGHT, 30, 20,
             tiles=[*(['tile1'] * 50), *(['tile2'] * 25), *(['tile4'] * 12), 'tile3'],
             tiles_z=['tile5', 'tile6', *([-1] * 50)])
@@ -18,6 +18,8 @@ def draw():
 
 
 def update(dt):
+    global room
+
     fox.update(dt)
 
     # Рассчитываем новые координаты лисы
@@ -36,7 +38,14 @@ def update(dt):
         new_y = room.y + room.height - fox.frame_height * fox.scale
 
     fox.position = (new_x, new_y)
-
+    temp_actor = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale,
+                      fox.frame_height * fox.scale)
+    if room.is_collided_with_door(temp_actor):
+        if keyboard.space:
+            fox.pos = (WIDTH // 2, HEIGHT // 2)
+            room = Room(WIDTH, HEIGHT, random.randint(5, 30), random.randint(5, 20),
+                        tiles=[*(['tile1'] * 50), *(['tile2'] * 25), *(['tile4'] * 12), 'tile3'],
+                        tiles_z=['tile5', 'tile6', *([-1] * 50)])
 
 
 def on_key_down(key):
@@ -60,7 +69,9 @@ def on_key_up(key):
     if key in [keys.UP, keys.DOWN]:
         fox.is_moving_y = False
 
+
 def on_mouse_down(pos):
     print("Позиция клика мыши:", pos)
+
 
 pgzrun.go()
