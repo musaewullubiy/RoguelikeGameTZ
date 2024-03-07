@@ -28,9 +28,11 @@ class AnimatedActor:
         self.stand_images_count = stand_images_count
         self.load_stand_images()
 
-        self.is_moving = False
+        self.is_moving_x = False
+        self.is_moving_y = False
         self.move_speed = 5
-        self.move_direction = 0
+        self.x_move_direction = 0
+        self.y_move_direction = 0
         self.time_since_last_frame = 0
         self.animation_speed = 0.6
 
@@ -73,14 +75,15 @@ class AnimatedActor:
             self.frame = (self.frame + 1) % len(self.move_images)
             self.time_since_last_frame -= self.animation_speed
 
-        self.position = (self.position[0] + int(self.is_moving) * self.move_direction * self.move_speed, self.position[1])
+        self.position = (self.position[0] + int(self.is_moving_x) * self.x_move_direction * self.move_speed,
+                         self.position[1] + int(self.is_moving_y) * self.y_move_direction * self.move_speed)
 
     def draw(self):
-        if self.is_moving:
+        if self.is_moving_x or self.is_moving_y:
             image = self.on_move()
         else:
             image = self.on_stand()
-        if self.move_direction == -1:
+        if self.x_move_direction == -1:
             image = pygame.transform.flip(image, True, False)
         game.screen.blit(image, self.position)
 
