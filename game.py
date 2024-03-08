@@ -113,7 +113,11 @@ class Enemy(AnimatedActor):
         super().update(dt)
         if not self.stop:
             if random.randint(1, 1000) == 1 or self.move_to == self.position:
-                self.move_to = (random.randint(self.borders[0], self.borders[2]), random.randint(self.borders[1], self.borders[3]))
+                try:
+                    self.move_to = (random.randint(self.borders[0], self.borders[2]),
+                                    random.randint(self.borders[1], self.borders[3]))
+                except ValueError:
+                    self.move_to = (400, 300)
             if random.randint(1, 20) == 1:
                 self.move_towards_destination()
 
@@ -165,10 +169,11 @@ class Tile:
 
 
 class Room:
-    def __init__(self, screen_width, screen_height, num_tiles_x, num_tiles_y, tiles=0, tiles_z=0):
+    def __init__(self, screen_width, screen_height, num_tiles_x, num_tiles_y, stage=1, tiles=0, tiles_z=0):
         if tiles == 0 or tiles_z == 0:
             tiles = ['tile1', 'tile2', 'tile3', 'tile4']
             tiles_z = ['tile5', *([-1] * 50)]
+        self.stage = stage
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.num_tiles_x = num_tiles_x
@@ -178,11 +183,12 @@ class Room:
         self.height = num_tiles_y * self.tile_size
         self.x = 8 + (screen_width - self.width) // 2 + (screen_width - self.width) % 2
         self.y = 8 + (screen_height - self.height) // 2 + (screen_height - self.height) % 2
+
         self.contents = self.generate_contents(tiles)
         self.contents_z = self.generate_contents(tiles_z)
         self.doors = self.generate_doors()
-
         self.enemies = self.generate_enemies()
+        self.coins = self.genetate_coins()
 
     def generate_contents(self, tile_image_names):
         contents = []
@@ -211,7 +217,7 @@ class Room:
     def generate_enemies(self):
         enemy = Enemy('/slime/move/', '/slime/stand/', '/slime/attack/', (200, 200), (400, 400),
               (self.x, self.y, self.width, self.height), scale=5, move_speed=3)
-        num_enemies = (self.num_tiles_y * self.num_tiles_x) // 100
+        num_enemies = (self.num_tiles_y * self.num_tiles_x) * 100 // (10000 - self.stage * 100)
         enemies = []
         for _ in range(num_enemies):
             enemy_x = random.randint(self.x, self.x + self.width - enemy.frame_width * enemy.scale)
@@ -222,6 +228,18 @@ class Room:
             enemies.append(Enemy('/slime/move/', '/slime/stand/', '/slime/attack/', (enemy_x, enemy_y), (400, 400),
                                  (self.x, self.y, self.width, self.height), scale=random.randint(2, 3), move_speed=random.randint(1, 4)))
         return enemies
+
+    def genetate_coins(self):
+        coins = []
+        for i in range(random.randint(1, 1000 // self.num_tiles_x // self.num_tiles_y)):
+            coin_x = random.randint(self.x, self.x + self.width - self.tile_size * 2)
+            coin_y = random.randint(self.y, self.y + self.height - self.tile_size * 2)
+            while self.is_near_door(coin_x, coin_y):
+                coin_x = random.randint(self.x, self.x + self.width - self.tile_size * 2)
+                coin_y = random.randint(self.y, self.y + self.height - self.tile_size * 2)
+            coin = Coin(coin_x, coin_y, self.tile_size * 2, 'coin.png')
+            coins.append(coin)
+        return coins
 
     def is_near_door(self, x, y):
         for door in self.doors:
@@ -245,6 +263,14 @@ class Room:
                 return True
         return False
 
+    def is_collided_with_coin(self, actor):
+        for coin in range(len(self.coins)):
+            coin_ = Rect(self.coins[coin].x, self.coins[coin].y, self.coins[coin].size, self.coins[coin].size)
+            if coin_.colliderect(actor):
+                self.coins.pop(coin)
+                return True
+        return False
+
     def draw(self):
         for tile in self.contents:
             tile.draw()
@@ -252,6 +278,8 @@ class Room:
             tile.draw()
         for door in self.doors:
             door.draw()
+        for coin in self.coins:
+            coin.draw()
         for enemy in self.enemies:
             enemy.draw()
         return Rect((self.x - 8, self.y - 8), (self.width, self.height))
@@ -262,6 +290,19 @@ class Room:
 
 
 class Door:
+    def __init__(self, x, y, size, image):
+        self.x = x
+        self.y = y
+        self.size = size
+        self.image = image
+        self.actor = Actor(image, pos=(x, y))
+        self.actor._surf = pygame.transform.scale(self.actor._surf, (size, size))
+
+    def draw(self):
+        self.actor.draw()
+
+
+class Coin:
     def __init__(self, x, y, size, image):
         self.x = x
         self.y = y
