@@ -24,13 +24,9 @@ class AnimatedActor:
         self.frames_count = frames_count
 
         self.move_images = []
-        self.move_images_row = move_images_row
-        self.move_images_count = move_images_count
         self.load_move_images()
 
         self.stand_images = []
-        self.stand_images_row = stand_images_row
-        self.stand_images_count = stand_images_count
         self.load_stand_images()
 
         self.is_moving_x = False
@@ -68,6 +64,11 @@ class AnimatedActor:
                                                  (self.frame_width * self.scale, self.frame_height * self.scale))
             self.stand_images.append(actor)
 
+    def scale_it(self, scale):
+        self.scale = scale
+        self.load_stand_images()
+        self.load_move_images()
+
     def on_move(self):
         return self.move_images[self.frame % len(self.move_images)]
 
@@ -97,8 +98,67 @@ class AnimatedActor:
 
 
 class Enemy(AnimatedActor):
-    def __init__(self, movepath, standpath, position):
-        super().__init__(movepath, standpath, position)
+    def __init__(self, movepath, standpath, attackpath, position, move_to, borders, **kwargs):
+        super().__init__(movepath, standpath, position, **kwargs)
+        self.move_to = move_to
+        self.borders = borders
+
+        self.attackpath = attackpath
+        self.attack_images = []
+        self.load_attack_images()
+        self.is_attack = False
+        self.stop = False
+        self.game_stop = False
+
+    def load_attack_images(self):
+        imagecount = len(os.listdir('images/' + self.attackpath))
+        for x in range(0, imagecount):
+            actor = Actor(self.attackpath[1::] + f'attack_{x}.png', pos=self.position)
+            actor._surf = pygame.transform.scale(actor._surf,
+                                                 (self.frame_width * self.scale, self.frame_height * self.scale))
+            self.attack_images.append(actor)
+
+    def on_attack(self):
+        return self.attack_images[self.frame % len(self.attack_images)]
+
+    def update(self, dt):
+        super().update(dt)
+        if not self.stop:
+            if random.randint(1, 1000) == 1 or self.move_to == self.position:
+                self.move_to = (random.randint(self.borders[0], self.borders[2]), random.randint(self.borders[1], self.borders[3]))
+            if random.randint(1, 20) == 1:
+                self.move_towards_destination()
+
+    def draw(self):
+        if self.game_stop:
+            image = self.stand_images[0]
+            image.pos = self.position
+            image.draw()
+            return None
+        if not self.is_attack:
+            if self.is_moving_x or self.is_moving_y:
+                image = self.on_move()
+            else:
+                image = self.on_stand()
+        else:
+            image = self.on_attack()
+        if self.x_move_direction == -1:
+            image._surf = pygame.transform.flip(image._surf, True, False)
+        image.pos = self.position
+        image.draw()
+        if self.x_move_direction == -1:
+            image._surf = pygame.transform.flip(image._surf, True, False)
+
+    def move_towards_destination(self):
+        dx = self.move_to[0] - self.position[0]
+        dy = self.move_to[1] - self.position[1]
+        distance = (dx ** 2 + dy ** 2) ** 0.5
+        if distance > 0:
+            speed = self.move_speed / distance
+            self.position = (self.position[0] + dx * speed, self.position[1] + dy * speed)
+        if abs(dx) < self.move_speed and abs(dy) < self.move_speed:
+            self.move_to = (
+            random.randint(self.borders[0], self.borders[2]), random.randint(self.borders[1], self.borders[3]))
 
 
 class Tile:
@@ -167,7 +227,8 @@ class Room:
 
     def is_collided_with_door(self, actor):
         for door in self.doors:
-            if door.actor.colliderect(actor):
+            door = Rect(door.x, door.y, door.size, door.size)
+            if door.colliderect(actor):
                 return True
         return False
 
