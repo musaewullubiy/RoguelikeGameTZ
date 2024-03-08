@@ -7,32 +7,36 @@ from config import *
 from game import *
 
 
-fox = AnimatedActor('/fox/move/', '/fox/stand/', (WIDTH // 2, HEIGHT // 2), scale=2, move_speed=3)
+fox = AnimatedActor('/fox/move/', '/fox/stand/', (WIDTH // 2, HEIGHT // 2), scale=2, move_speed=2)
 default_tiles = {'tiles': [*(['tile1'] * 50), *(['tile2'] * 25), *(['tile4'] * 12), 'tile3'], 'tiles_z': ['tile5', 'tile6', *([-1] * 50)]}
 sand_tiles = {'tiles': [*(['tile_s2'] * 5), *(['tile_s3'] * 20), *(['tile_s4'] * 30), *(['tile_s5'] * 5)], 'tiles_z': ['tile_s6', *([-1] * 50)]}
 room = Room(WIDTH, HEIGHT, 30, 20, **default_tiles)
-enemy = Enemy('/slime/move/', '/slime/stand/', '/slime/attack/', (200, 200), (400, 400), (room.x, room.y, room.width, room.height), scale=5, move_speed=3)
-
-collision_time = None
 game_stop = False
 
 
+def on_collide_enemy_and_fox():
+    global game_stop
+    temp_actor = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale, fox.frame_height * fox.scale)
+    collided_enemy = room.is_collided_with_enemy(temp_actor)
+    if collided_enemy != 0:
+        fox.stop = True
+        collided_enemy.stop = True
+        for enemy in room.enemies:
+            enemy.game_stop = game_stop = True
+
 def draw():
     screen.clear()
-    rect = room.draw(screen.surface).inflate(10, 10)
+    rect = room.draw().inflate(10, 10)
     screen.draw.rect(rect, (128, 128, 128))
     if not game_stop:
         fox.draw()
-    enemy.draw()
 
 
 def update(dt):
-    global collision_time
     global room
-    global game_stop
 
     fox.update(dt)
-    enemy.update(dt)
+    room.update(dt)
 
     # Рассчитываем новые координаты лисы
     new_x = fox.position[0] + int(fox.is_moving_x) * fox.x_move_direction * fox.move_speed
@@ -51,26 +55,24 @@ def update(dt):
 
     fox.position = (new_x, new_y)
 
-    if fox.position[0] > enemy.position[0]:
-        enemy.x_move_direction = -1
-    else:
-        enemy.x_move_direction = 1
+    for enemy in room.enemies:
+        if fox.position[0] >= enemy.position[0] and not game_stop:
+            enemy.x_move_direction = -1
+        else:
+            enemy.x_move_direction = 1
 
-    fox_rect = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale, fox.frame_height * fox.scale)
-    enemy_rect = Rect(enemy.position[0], enemy.position[1], enemy.frame_width * enemy.scale,
-                      enemy.frame_height * enemy.scale)
-    enemy.is_attack = False
-    if fox_rect.colliderect(enemy_rect):
-        enemy.is_attack = True
-        enemy.stop = True
-        if collision_time is None:
-            collision_time = time.time()
-        elif time.time() - collision_time >= 2:
-            enemy.game_stop = game_stop = True
+    temp_actor = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale, fox.frame_height * fox.scale)
+    collided_enemy = room.is_collided_with_enemy(temp_actor)
+    if collided_enemy != 0:
+        clock.schedule(on_collide_enemy_and_fox, 2)
+        collided_enemy.is_attack = True
+    else:
+        for enemy in room.enemies:
+            enemy.is_attack = False
 
 
 def on_key_down(key):
-    if not game_stop:
+    if not game_stop and not fox.stop:
         if key == keys.RIGHT:
             fox.is_moving_x = True
             fox.x_move_direction = 1
