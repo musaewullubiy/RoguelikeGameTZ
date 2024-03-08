@@ -151,8 +151,11 @@ class Enemy(AnimatedActor):
             speed = self.move_speed / distance
             self.position = (self.position[0] + dx * speed, self.position[1] + dy * speed)
         if abs(dx) < self.move_speed and abs(dy) < self.move_speed:
-            self.move_to = (
-            random.randint(self.borders[0], self.borders[2]), random.randint(self.borders[1], self.borders[3]))
+            try:
+                self.move_to = (
+                random.randint(self.borders[0], self.borders[2]), random.randint(self.borders[1], self.borders[3]))
+            except ValueError:
+                self.move_to = (400, 300)
 
 
 class Tile:
@@ -217,7 +220,7 @@ class Room:
     def generate_enemies(self):
         enemy = Enemy('/slime/move/', '/slime/stand/', '/slime/attack/', (200, 200), (400, 400),
               (self.x, self.y, self.width, self.height), scale=5, move_speed=3)
-        num_enemies = (self.num_tiles_y * self.num_tiles_x) * 100 // (10000 - self.stage * 100)
+        num_enemies = self.stage
         enemies = []
         for _ in range(num_enemies):
             enemy_x = random.randint(self.x, self.x + self.width - enemy.frame_width * enemy.scale)

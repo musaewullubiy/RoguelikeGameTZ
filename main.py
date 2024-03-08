@@ -1,17 +1,15 @@
 # Тут будет сам запуск игры
-import random
-import time
-
 import pgzrun
 from config import *
 from game import *
 from interface import *
 
+sounds.bg_music.play(-1)
 
-button_start = Button('sdfdsf', (100 + WIDTH // 2 - 400 // 2, HEIGHT // 2 - 50 // 2 - 100 + 200), 'tile1', size=(400, 50))
-button_exit = Button('sdfdsf', (100 + WIDTH // 2 - 400 // 2, HEIGHT // 2 - 50 // 2 + 200), 'tile1', size=(400, 50))
+button_start = Button('START', (100 + WIDTH // 2 - 400 // 2, HEIGHT // 2 - 50 // 2 - 100 + 200), 'start', size=(400, 50))
+button_exit = Button('EXIT', (100 + WIDTH // 2 - 400 // 2, HEIGHT // 2 - 50 // 2 + 200), 'exit', size=(400, 50))
+button_music = Button('', (100 + WIDTH // 2 - 150 // 2 - 300, HEIGHT // 2 - 150 + 25 + 200), 'musicon', size=(150, 150))
 
-button_music = Button('sdfdsf', (100 + WIDTH // 2 - 150 // 2 - 300, HEIGHT // 2 - 150 + 25 + 200), 'tile1', size=(150, 150))
 
 fox = None
 default_tiles = None
@@ -19,12 +17,16 @@ sand_tiles = None
 room = None
 game_stop = False
 game_over = True
+game_played = False
+sound = True
 score = 0
 stage = 1
+record = [0, 1]
 
 
 def start_game():
-    global fox, room, default_tiles, sand_tiles
+    global fox, room, default_tiles, sand_tiles, game_over, game_stop
+    game_over = game_stop = False
     fox = AnimatedActor('/fox/move/', '/fox/stand/', (WIDTH // 2, HEIGHT // 2), scale=2, move_speed=2)
     default_tiles = {'tiles': [*(['tile1'] * 50), *(['tile2'] * 25), *(['tile4'] * 12), 'tile3'],
                      'tiles_z': ['tile5', 'tile6', *([-1] * 50)]}
@@ -34,16 +36,22 @@ def start_game():
 
 
 def on_collide_enemy_and_fox():
-    global game_stop
-    global game_over
+    global game_stop, game_over, game_played, score, stage, record
     temp_actor = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale, fox.frame_height * fox.scale)
     collided_enemy = room.is_collided_with_enemy(temp_actor)
     if collided_enemy != 0:
-        fox.stop = True
-        collided_enemy.stop = True
         for enemy in room.enemies:
             enemy.game_stop = game_stop = True
-            game_over = True
+        if score != 0:
+            record = [score, stage]
+        if sound:
+            sounds.slap.play()
+        fox.stop = True
+        collided_enemy.stop = True
+        score = 0
+        stage = 1
+        game_over = True
+        game_played = True
 
 
 def draw():
@@ -51,15 +59,18 @@ def draw():
         screen.clear()
         rect = room.draw().inflate(10, 10)
         screen.draw.rect(rect, (128, 128, 128))
-        screen.draw.text(f"Счет: {score}", (100, 50), color="white", fontsize=30)
-        screen.draw.text(f"Комната #{stage}", (300, 50), color="white", fontsize=30)
+        screen.draw.text(f"Счет: {score}", (100, 25), color="white", fontsize=30)
+        screen.draw.text(f"Комната #{stage}", (300, 25), color="white", fontsize=30)
         if not game_stop:
             fox.draw()
     else:
         screen.clear()
-        button_start.draw()
-        button_music.draw()
-        button_exit.draw()
+        if game_played:
+            screen.draw.text(f'Игра закончилась с счетом: {record[0]}', (250, 100), fontsize=40, color='white')
+            screen.draw.text(f'Вы прошли {record[1]} комнат', (250, 140), fontsize=40, color='white')
+        button_start.draw(screen)
+        button_music.draw(screen)
+        button_exit.draw(screen)
 
 
 def update(dt):
@@ -96,12 +107,17 @@ def update(dt):
         if collided_enemy != 0:
             clock.schedule(on_collide_enemy_and_fox, 1)
             collided_enemy.is_attack = True
+            collided_enemy.animation_speed = 0.2
+            if sound:
+                sounds.attack.play()
         else:
             for enemy in room.enemies:
                 enemy.is_attack = False
 
         collided_coin = room.is_collided_with_coin(temp_actor)
         if collided_coin:
+            if sound:
+                sounds.coin.play()
             score += 1
 
 
@@ -135,17 +151,27 @@ def on_key_up(key):
             if room.is_collided_with_door(temp_actor):
                 stage += 1
                 room = Room(WIDTH, HEIGHT, random.randint(5, 30), random.randint(5, 20), stage=stage, **tiles)
+                if sound:
+                    sounds.door.play()
 
 
 def on_mouse_down(pos):
-    global game_over
+    global game_over, sound
     if game_over:
         print("Позиция клика мыши:", pos)
         if button_start.is_clicked(pos):
-            start_game()
-            game_over = False
+            clock.schedule(start_game, 1)
         if button_exit.is_clicked(pos):
             quit()
+        if button_music.is_clicked(pos):
+            if sound:
+                button_music.change_image('musicoff')
+                sounds.bg_music.stop()
+                sound = False
+            else:
+                button_music.change_image('musicon')
+                sounds.bg_music.play()
+                sound = True
 
 
 pgzrun.go()
