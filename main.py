@@ -14,6 +14,7 @@ button_music = Button('', (100 + WIDTH // 2 - 150 // 2 - 300, HEIGHT // 2 - 150 
 
 # важные игровые переменные
 fox = None
+fox_stop = False
 default_tiles = None
 sand_tiles = None
 room = None
@@ -35,11 +36,11 @@ def start_game():
                      'tiles_z': ['tile5', 'tile6', *([-1] * 50)]}
     sand_tiles = {'tiles': [*(['tile_s2'] * 5), *(['tile_s3'] * 20), *(['tile_s4'] * 30), *(['tile_s5'] * 5)],
                   'tiles_z': ['tile_s6', *([-1] * 50)]}
-    room = Room(WIDTH, HEIGHT, 30, 20, actor=fox, **default_tiles)
+    room = Room(WIDTH, HEIGHT, 30, 20, **default_tiles)
 
 
 def on_collide_enemy_and_fox():
-    global game_stop, game_over, game_played, score, stage, record
+    global game_stop, game_over, game_played, score, stage, record, fox_stop
     temp_actor = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale, fox.frame_height * fox.scale)
     collided_enemy = room.is_collided_with_enemy(temp_actor)
     if collided_enemy != 0:
@@ -49,7 +50,7 @@ def on_collide_enemy_and_fox():
             record = [score, stage]
         if sound:
             sounds.slap.play()
-        fox.stop = True
+        fox_stop = True
         collided_enemy.stop = True
         score = 0
         stage = 1
@@ -70,6 +71,7 @@ def draw():
     else:
         # рисуем интерфейс
         screen.clear()
+        screen.fill((153, 204, 255))
         if game_played:
             screen.draw.text(f'Игра закончилась с счетом: {record[0]}', (250, 100), fontsize=40, color='white')
             screen.draw.text(f'Вы прошли {record[1]} комнат', (250, 140), fontsize=40, color='white')
@@ -127,7 +129,7 @@ def update(dt):
 
 
 def on_key_down(key):
-    if not game_stop and not fox.stop:
+    if not game_over:
         if key == keys.RIGHT:
             fox.is_moving_x = True
             fox.x_move_direction = 1
@@ -155,7 +157,7 @@ def on_key_up(key):
             temp_actor = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale, fox.frame_height * fox.scale)
             if room.is_collided_with_door(temp_actor):
                 stage += 1
-                room = Room(WIDTH, HEIGHT, random.randint(5, 30), random.randint(5, 20), stage=stage, actor=fox, **tiles)
+                room = Room(WIDTH, HEIGHT, random.randint(5, 30), random.randint(5, 20), stage=stage, **tiles)
                 if sound:
                     sounds.door.play()
 
