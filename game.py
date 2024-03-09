@@ -176,7 +176,7 @@ class MyActor:
 
 
 class Room:
-    def __init__(self, screen_width, screen_height, num_tiles_x, num_tiles_y, stage=1, tiles=0, tiles_z=0):
+    def __init__(self, screen_width, screen_height, num_tiles_x, num_tiles_y, stage=1, tiles=0, tiles_z=0, actor=None):
         if tiles == 0 or tiles_z == 0:
             tiles = ['tile1', 'tile2', 'tile3', 'tile4']
             tiles_z = ['tile5', *([-1] * 50)]
@@ -229,7 +229,7 @@ class Room:
         for _ in range(num_enemies):
             enemy_x = random.randint(self.x, self.x + self.width - enemy.frame_width * enemy.scale)
             enemy_y = random.randint(self.y, self.y + self.height - enemy.frame_height * enemy.scale)
-            while self.is_near_door(enemy_x, enemy_y):
+            while self.is_near_door(enemy_x, enemy_y) and self.is_near_actor(enemy_x, enemy_y):
                 enemy_x = random.randint(self.x, self.x + self.width - enemy.frame_width * enemy.scale)
                 enemy_y = random.randint(self.y, self.y + self.height - enemy.frame_height * enemy.scale)
             enemies.append(Enemy('/slime/move/', '/slime/stand/', '/slime/attack/', (enemy_x, enemy_y), (400, 400),
@@ -241,7 +241,7 @@ class Room:
         for i in range(random.randint(1, 1000 // self.num_tiles_x // self.num_tiles_y)):
             coin_x = random.randint(self.x, self.x + self.width - self.tile_size * 2)
             coin_y = random.randint(self.y, self.y + self.height - self.tile_size * 2)
-            while self.is_near_door(coin_x, coin_y):
+            while self.is_near_door(coin_x, coin_y) and self.is_near_actor(coin_x, coin_y):
                 coin_x = random.randint(self.x, self.x + self.width - self.tile_size * 2)
                 coin_y = random.randint(self.y, self.y + self.height - self.tile_size * 2)
             coin = MyActor(coin_x, coin_y, self.tile_size * 2, 'coin.png')
@@ -250,9 +250,17 @@ class Room:
 
     def is_near_door(self, x, y):
         for door in self.doors:
-            door_rect = Rect(door.x, door.y, door.size, door.size)
+            door_rect = Rect(door.x, door.y, door.size + 20, door.size + 20)
             if door_rect.collidepoint(x, y):
                 return True
+        return False
+
+    def is_near_actor(self, x, y):
+        temp_actor = Rect(self.actor.position[0], self.actor.position[1],
+                          self.actor.frame_width * self.actor.scale,
+                          self.actor.frame_height * self.actor.scale)
+        if temp_actor.collidepoint(x, y):
+            return True
         return False
 
     def is_collided_with_enemy(self, actor):

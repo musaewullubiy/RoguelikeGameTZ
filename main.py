@@ -35,7 +35,7 @@ def start_game():
                      'tiles_z': ['tile5', 'tile6', *([-1] * 50)]}
     sand_tiles = {'tiles': [*(['tile_s2'] * 5), *(['tile_s3'] * 20), *(['tile_s4'] * 30), *(['tile_s5'] * 5)],
                   'tiles_z': ['tile_s6', *([-1] * 50)]}
-    room = Room(WIDTH, HEIGHT, 30, 20, **default_tiles)
+    room = Room(WIDTH, HEIGHT, 30, 20, actor=fox, **default_tiles)
 
 
 def on_collide_enemy_and_fox():
@@ -155,7 +155,7 @@ def on_key_up(key):
             temp_actor = Rect(fox.position[0], fox.position[1], fox.frame_width * fox.scale, fox.frame_height * fox.scale)
             if room.is_collided_with_door(temp_actor):
                 stage += 1
-                room = Room(WIDTH, HEIGHT, random.randint(5, 30), random.randint(5, 20), stage=stage, **tiles)
+                room = Room(WIDTH, HEIGHT, random.randint(5, 30), random.randint(5, 20), stage=stage, actor=fox, **tiles)
                 if sound:
                     sounds.door.play()
 
