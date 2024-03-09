@@ -85,6 +85,10 @@ class AnimatedActor:
         if self.x_move_direction == -1:
             image._surf = pygame.transform.flip(image._surf, True, False)
 
+    def remove(self):
+        for image in self.stand_images + self.move_images:
+            image.remove()
+
 
 class Enemy(AnimatedActor):
     def __init__(self, movepath, standpath, attackpath, position, move_to, borders, **kwargs):
@@ -158,7 +162,7 @@ class Enemy(AnimatedActor):
                 self.move_to = (400, 300)
 
 
-class Tile:
+class MyActor:
     def __init__(self, x, y, size, image):
         self.x = x
         self.y = y
@@ -201,7 +205,7 @@ class Room:
                 tile_y = self.y + y * self.tile_size
                 image = random.choice(tile_image_names)
                 if image != -1:
-                    contents.append(Tile(tile_x, tile_y, self.tile_size, image))
+                    contents.append(MyActor(tile_x, tile_y, self.tile_size, image))
         return contents
 
     def generate_doors(self):
@@ -214,7 +218,7 @@ class Room:
         doors = []
         for i in range(num_doors):
             door_x, door_y = door_positions.pop()
-            doors.append(Door(door_x, door_y, self.tile_size, 'door.png'))
+            doors.append(MyActor(door_x, door_y, self.tile_size, 'door.png'))
         return doors
 
     def generate_enemies(self):
@@ -240,7 +244,7 @@ class Room:
             while self.is_near_door(coin_x, coin_y):
                 coin_x = random.randint(self.x, self.x + self.width - self.tile_size * 2)
                 coin_y = random.randint(self.y, self.y + self.height - self.tile_size * 2)
-            coin = Coin(coin_x, coin_y, self.tile_size * 2, 'coin.png')
+            coin = MyActor(coin_x, coin_y, self.tile_size * 2, 'coin.png')
             coins.append(coin)
         return coins
 
@@ -290,29 +294,3 @@ class Room:
     def update(self, dt):
         for enemy in self.enemies:
             enemy.update(dt)
-
-
-class Door:
-    def __init__(self, x, y, size, image):
-        self.x = x
-        self.y = y
-        self.size = size
-        self.image = image
-        self.actor = Actor(image, pos=(x, y))
-        self.actor._surf = pygame.transform.scale(self.actor._surf, (size, size))
-
-    def draw(self):
-        self.actor.draw()
-
-
-class Coin:
-    def __init__(self, x, y, size, image):
-        self.x = x
-        self.y = y
-        self.size = size
-        self.image = image
-        self.actor = Actor(image, pos=(x, y))
-        self.actor._surf = pygame.transform.scale(self.actor._surf, (size, size))
-
-    def draw(self):
-        self.actor.draw()

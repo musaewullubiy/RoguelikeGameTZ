@@ -1,16 +1,18 @@
-# Тут будет сам запуск игры
 import pgzrun
 from config import *
 from game import *
 from interface import *
 
+# фоновая музыка
 sounds.bg_music.play(-1)
 
+# создаем интерфейс
 button_start = Button('START', (100 + WIDTH // 2 - 400 // 2, HEIGHT // 2 - 50 // 2 - 100 + 200), 'start', size=(400, 50))
 button_exit = Button('EXIT', (100 + WIDTH // 2 - 400 // 2, HEIGHT // 2 - 50 // 2 + 200), 'exit', size=(400, 50))
 button_music = Button('', (100 + WIDTH // 2 - 150 // 2 - 300, HEIGHT // 2 - 150 + 25 + 200), 'musicon', size=(150, 150))
 
 
+# важные игровые переменные
 fox = None
 default_tiles = None
 sand_tiles = None
@@ -24,6 +26,7 @@ stage = 1
 record = [0, 1]
 
 
+# при нажатии на старт
 def start_game():
     global fox, room, default_tiles, sand_tiles, game_over, game_stop
     game_over = game_stop = False
@@ -56,6 +59,7 @@ def on_collide_enemy_and_fox():
 
 def draw():
     if not game_over:
+        # рисуем игру
         screen.clear()
         rect = room.draw().inflate(10, 10)
         screen.draw.rect(rect, (128, 128, 128))
@@ -64,6 +68,7 @@ def draw():
         if not game_stop:
             fox.draw()
     else:
+        # рисуем интерфейс
         screen.clear()
         if game_played:
             screen.draw.text(f'Игра закончилась с счетом: {record[0]}', (250, 100), fontsize=40, color='white')
